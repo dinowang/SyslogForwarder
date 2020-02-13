@@ -51,13 +51,13 @@ namespace SyslogForwarder
             var events = new List<EventData>(2048);
             while (true)
             {
-                if (ehClient.IsClosed)
-                {
-                    ehClient = EventHubClient.Create(ehConnection);
-                }
-
                 while (!_waitHandles.IsEmpty)
                 {
+                    if (ehClient.IsClosed)
+                    {
+                        ehClient = EventHubClient.Create(ehConnection);
+                    }
+
                     Console.WriteLine($"Preparing forwarding batch...");
 
                     events.Clear();
@@ -72,23 +72,24 @@ namespace SyslogForwarder
                         await ehClient.SendAsync(events);
                     }
                 }
-                Thread.Sleep(_forwarder.IterationInterval);
+
+                await Task.Delay(_forwarder.IterationInterval);
             }
         }
 
-        static void Receiver()
+        static async void Receiver()
         {
-            var udpListener = new UdpClient(_listener.Port);
             var endpoint = new IPEndPoint(IPAddress.Any, _listener.Port);
+            var udpListener = new UdpClient(endpoint);
 
             while (true)
             {
-                var receivedBuffer = udpListener.Receive(ref endpoint);
+                var receivedBuffer = await udpListener.ReceiveAsync();
 
-                // var receivedText = Encoding.ASCII.GetString(receivedBuffer);
+                // var receivedText = Encoding.ASCII.GetString(receivedBuffer.Buffer);
                 // Console.Write($"Received: {receivedText}");
 
-                var eventData = new EventData(receivedBuffer);
+                var eventData = new EventData(receivedBuffer.Buffer);
                 _waitHandles.Enqueue(eventData);
             }
         }
