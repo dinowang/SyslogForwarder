@@ -9,7 +9,7 @@ namespace SyslogForwarder
 
     internal class ListenerConfig
     {
-        public int Port { get; set; }
+        public int Port { get; set; } = 514;
     }
 
     internal class ConverterConfig
@@ -19,7 +19,7 @@ namespace SyslogForwarder
 
     internal class ForwarderConfig
     {
-        public int IterationInterval { get; set; }
+        public int IterationInterval { get; set; } = 1000;
 
         public EventHubConfig EventHub { get; set; }
 
